@@ -1,0 +1,43 @@
+.form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #1b8c3e;
+}
+
+.colorPicker {
+  width: 40px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.submit {
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  background: #1b8c3e;
+  color: white;
+  cursor: pointer;
+}
+
+.cancel {
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  background: #e0e0e0;
+  color: #333;
+  cursor: pointer;
+}
