@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
@@ -9,7 +10,9 @@ interface SidebarProps {
   onDeleteProject?: (id: string) => void;
 }
 
-export default function Sidebar({ projects, isOpen, onRenameProject, onDeleteProject }: SidebarProps) {
+function Sidebar({ projects, isOpen, onRenameProject, onDeleteProject }: SidebarProps) {
+  console.log('Sidebar re-render');
+
   return (
     <aside className={`${styles.sidebar} ${isOpen ? styles.open : styles.closed}`}>
       <h2 className={styles.title}>Mes Projets</h2>
@@ -39,3 +42,5 @@ export default function Sidebar({ projects, isOpen, onRenameProject, onDeletePro
     </aside>
   );
 }
+
+export default memo(Sidebar);

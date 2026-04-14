@@ -1,112 +1,34 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../features/auth/AuthContext';
-import api from '../api/axios';
+import { useCallback, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../features/auth/authSlice';
 import HeaderMUI from '../components/HeaderMUI';
 import Sidebar from '../components/Sidebar';
 import MainContent from '../components/MainContent';
 import ProjectForm from '../components/ProjectForm';
 import styles from './Dashboard.module.css';
-
-interface Project {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface Column {
-  id: string;
-  title: string;
-  tasks: string[];
-}
+import useProjects, { type Project } from '../hooks/useProjects';
+import type { AppDispatch, RootState } from '../store';
 
 export default function Dashboard() {
-  const { state: authState, dispatch } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
+  const userName = useSelector((state: RootState) => state.auth.user?.name);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [columns, setColumns] = useState<Column[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const { projects, columns, loading, error, addProject, renameProject, deleteProject } = useProjects();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [projRes, colRes] = await Promise.all([api.get('/projects'), api.get('/columns')]);
-        setProjects(projRes.data);
-        setColumns(colRes.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
+  const handleRenameProject = useCallback(
+    (project: Project) => {
+      void renameProject(project);
+    },
+    [renameProject],
+  );
 
-  async function addProject(name: string, color: string) {
-    setSaving(true);
-    setError(null);
-    try {
-      const { data } = await api.post('/projects', { name, color });
-      setProjects((prev) => [...prev, data]);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || `Erreur ${err.response?.status ?? ''}`.trim());
-      } else {
-        setError('Erreur inconnue');
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function renameProject(project: Project) {
-    const input = prompt('Nouveau nom :', project.name);
-    const newName = input?.trim();
-
-    if (!newName || newName === project.name) {
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      const { data } = await api.put('/projects/' + project.id, { ...project, name: newName });
-      setProjects((prev) => prev.map((item) => (item.id === project.id ? data : item)));
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || `Erreur ${err.response?.status ?? ''}`.trim());
-      } else {
-        setError('Erreur inconnue');
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function deleteProject(id: string) {
-    const confirmed = confirm('Etes-vous sur ?');
-    if (!confirmed) {
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      await api.delete('/projects/' + id);
-      setProjects((prev) => prev.filter((item) => item.id !== id));
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || `Erreur ${err.response?.status ?? ''}`.trim());
-      } else {
-        setError('Erreur inconnue');
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
+  const handleDeleteProject = useCallback(
+    (id: string) => {
+      void deleteProject(id);
+    },
+    [deleteProject],
+  );
 
   if (loading) return <div className={styles.loading}>Chargement...</div>;
 
@@ -115,20 +37,20 @@ export default function Dashboard() {
       <HeaderMUI 
         title="TaskFlow"
         onMenuClick={() => setSidebarOpen((prev) => !prev)}
-        userName={authState.user?.name}
-        onLogout={() => dispatch({ type: 'LOGOUT' })}
+        userName={userName}
+        onLogout={() => dispatch(logout())}
       />
       <div className={styles.body}>
         <Sidebar
           projects={projects}
           isOpen={sidebarOpen}
-          onRenameProject={renameProject}
-          onDeleteProject={deleteProject}
+          onRenameProject={handleRenameProject}
+          onDeleteProject={handleDeleteProject}
         />
         <div className={styles.content}>
           <div className={styles.toolbar}>
             {!showForm ? (
-              <button className={styles.addBtn} onClick={() => setShowForm(true)} disabled={saving}>
+              <button className={styles.addBtn} onClick={() => setShowForm(true)}>
                 + Nouveau projet
               </button>
             ) : (
